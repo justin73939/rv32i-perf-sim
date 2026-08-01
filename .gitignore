@@ -1,0 +1,30 @@
+# Build
+build/
+cmake-build-*/
+out/
+
+# IDE / OS
+.idea/
+.vscode/
+.cursor/
+*.swp
+.DS_Store
+
+# Compile artifacts
+*.o
+*.a
+*.dylib
+*.so
+*.exe
+
+# Python (later experiment scripts)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Coverage / sanitizer
+*.gcda
+*.gcno
+*.profraw
+*.profdata
