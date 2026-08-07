@@ -8,8 +8,6 @@ class Memory;
 class RegisterFile;
 
 // Single-cycle RV32IM CPU — executes one instruction per step().
-//
-// Where it sits: the glue that wires fetch → decode → regfile → ALU → memory → writeback → PC.
 // Owns PC and halt state; borrows Memory and RegisterFile (does not own them).
 class Cpu {
  public:
@@ -18,7 +16,6 @@ class Cpu {
   // Set PC to `pc`, clear halted flag. Regfile/memory are caller's job to reset separately.
   void reset(uint32_t pc = 0);
 
-  // Execute exactly one instruction (fetch at PC, then update PC or halt).
   void step();
 
   uint32_t pc() const;

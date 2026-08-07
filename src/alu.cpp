@@ -3,19 +3,9 @@
 namespace sim {
 
 uint32_t alu(uint32_t a, uint32_t b, AluOp op) {
-  // TODO: implement the ALU
-  //
   // This is a pure function: inputs a, b, op → one uint32_t out.
-  // Prefer if / else if (same style as the decoder).
-  //
-  // Hints (fill in AFTER source-first gate — don't guess bit tricks yet):
-  //   - Add / Sub / And / Or / Xor: C++ +, -, &, |, ^ on uint32_t
-  //   - Shifts: only the low 5 bits of b are the shift amount (RV32)
-  //   - Slt / Sltu: compare as signed vs unsigned; result is 1 or 0
-  //   - Mul family / Div family: see RISC-V M extension; watch divide-by-zero
-  //     and signed overflow edge cases (spec defines them — you will look them up)
-  //
   // Unknown op: return 0 for now (CPU shouldn't ask for one).
+  
   if (op == AluOp::Add){
     return (a + b); //uint32_t natively takes care of overflow
   }

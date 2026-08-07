@@ -13,12 +13,11 @@ enum class AluOp {
   And,
   Or,
   Xor,
-  Sll,   // shift left logical
-  Srl,   // shift right logical
-  Sra,   // shift right arithmetic (sign-preserving)
-  Slt,   // set less than (signed)
-  Sltu,  // set less than (unsigned)
-  // M extension (multiply / divide)
+  Sll,   
+  Srl,   
+  Sra,   
+  Slt,   
+  Sltu, 
   Mul,
   Mulh,
   Mulhsu,
