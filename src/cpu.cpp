@@ -159,4 +159,10 @@ void Cpu::step() {
 
 }
 
+void Cpu::run(){
+  while (!halted_){
+    step();
+  }
+}
+
 }  // namespace sim

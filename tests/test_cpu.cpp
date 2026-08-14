@@ -107,3 +107,32 @@ TEST(Cpu, EcallHalts) {
   EXPECT_TRUE(cpu.halted());
   EXPECT_EQ(cpu.pc(), 4u);  // PC advances past ecall before halt (our convention)
 }
+
+TEST(Cpu, CpuRun) {
+    Memory mem(256);
+    RegisterFile regs;
+    Cpu cpu(mem, regs);
+  
+    // ADDI x1, x2, 3  →  0x00310093
+    regs.write(2, 20u); // give x2 a value of 20
+    mem.store_word(0, 0x00410093u); // at index 0  store this instruction; now x1 has 24
+
+    // STORE
+    mem.store_word(4, 0x00112423u);       // instruction at PC=4 @ memory address 20+8 store value in x1 (24)
+
+    // Load
+    mem.store_word(8, 0x01C02183u);       // instruction at PC=8 @ feed value in mem address 28 (24) into reg x3
+
+    // Ecall
+    mem.store_word(12, 0x00000073u);
+  
+    cpu.reset(0);
+    cpu.run();
+
+    EXPECT_TRUE(cpu.halted()); // check if Ecall hit
+    EXPECT_EQ(cpu.pc(), 16u);  // check if pc stopped at the right spot
+    EXPECT_EQ(regs.read(2), 20u); // check if correct init of value in x2
+    EXPECT_EQ(regs.read(1), 24u); // check if addI succeeded
+    EXPECT_EQ(mem.load_word(28), 24u); // store: check if mem address 28 contains value in x1 
+    EXPECT_EQ(regs.read(3), 24u); // load: check if reg x3 has mem address 28's value
+}

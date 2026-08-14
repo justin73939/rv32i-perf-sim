@@ -18,6 +18,8 @@ class Cpu {
 
   void step();
 
+  void run();
+
   uint32_t pc() const;
   bool halted() const;
 
