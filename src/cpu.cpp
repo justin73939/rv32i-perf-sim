@@ -31,6 +31,7 @@ void Cpu::step() {
   }
   uint32_t inst_word = mem_.load_word(pc_);
   DecodedInstr x = decode(inst_word);
+  uint32_t next_pc = pc_ + 4;
 
 
   if (x.opcode == static_cast<uint8_t>(Opcode::Op)){
@@ -150,12 +151,46 @@ void Cpu::step() {
     }
   }
 
+  if (x.opcode == static_cast<uint8_t>(Opcode::Lui)){
+    regs_.write(x.rd, static_cast<uint32_t>(x.imm));
+  }
+
+  if (x.opcode == static_cast<uint8_t>(Opcode::Auipc)){
+    uint32_t a = pc();
+    uint32_t address = a + static_cast<uint32_t>(x.imm);
+    regs_.write(x.rd, address);
+    
+  }
+
+  if (x.opcode == static_cast<uint8_t>(Opcode::Branch)) {
+    uint32_t a = regs_.read(x.rs1);
+    uint32_t b = regs_.read(x.rs2);
+    bool take = false;
+
+    if (x.funct3 == 0b000) {  // BEQ
+      take = (a == b);
+    } else if (x.funct3 == 0b001) {  // BNE
+      take = (a != b);
+    } else if (x.funct3 == 0b100) {  // BLT (signed)
+      take = (static_cast<int32_t>(a) < static_cast<int32_t>(b));
+    } else if (x.funct3 == 0b101) {  // BGE (signed)
+      take = (static_cast<int32_t>(a) >= static_cast<int32_t>(b));
+    } else if (x.funct3 == 0b110) {  // BLTU (unsigned)
+      take = (a < b);
+    } else if (x.funct3 == 0b111) {  // BGEU (unsigned)
+      take = (a >= b);
+    }
+
+    if (take) {
+      next_pc = pc_ + static_cast<uint32_t>(x.imm);
+    }
+  }
 
   if (x.opcode == static_cast<uint8_t>(Opcode::System)){
     halted_=true;
   }
 
-  pc_ +=4;
+  pc_ = next_pc;
 
 }
 
