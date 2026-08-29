@@ -12,6 +12,7 @@ Cpu::Cpu(Memory& mem, RegisterFile& regs) : mem_(mem), regs_(regs) {}
 void Cpu::reset(uint32_t pc) {
   pc_ = pc;
   halted_ = false;
+  fault_cause_ = FaultCause::None;
 }
 
 uint32_t Cpu::pc() const {
@@ -22,11 +23,19 @@ bool Cpu::halted() const {
   return halted_;
 }
 
+bool Cpu::faulted() const {
+  return fault_cause_ != FaultCause::None;
+}
+
+FaultCause Cpu::fault_cause() const {
+  return fault_cause_;
+}
+
 void Cpu::step() {
   // IF (Instruction Fetch) -> ID (Instruction Decode) -> EX (Execute the computation) -> MEM (only for loads and store) -> WB (Write Back into destination register)
   //   Default for non-branch, non-jump, non-halt: pc_ += 4
 
-  if (halted_==true){
+  if (halted_ || faulted()){
     return;
   }
   uint32_t inst_word = mem_.load_word(pc_);
@@ -186,6 +195,33 @@ void Cpu::step() {
     }
   }
 
+  if (x.opcode == static_cast<uint8_t>(Opcode::Jal)) {
+    uint32_t target = pc_ + static_cast<uint32_t>(x.imm);
+    if ((target & 0x3u) != 0) {
+      fault_cause_ = FaultCause::InstructionAddressMisaligned;
+      return;
+    }
+
+    regs_.write(x.rd, pc_ + 4);
+    next_pc = target;
+  }
+
+  if (x.opcode == static_cast<uint8_t>(Opcode::Jalr)) {
+    if (x.funct3 == 0b000) {  // JALR
+      uint32_t target = regs_.read(x.rs1) +
+                        static_cast<uint32_t>(x.imm);
+      target &= ~1u;  // JALR clears the target address's least-significant bit.
+
+      if ((target & 0x3u) != 0) {
+        fault_cause_ = FaultCause::InstructionAddressMisaligned;
+        return;
+      }
+
+      regs_.write(x.rd, pc_ + 4);
+      next_pc = target;
+    }
+  }
+
   if (x.opcode == static_cast<uint8_t>(Opcode::System)){
     halted_=true;
   }
@@ -195,7 +231,7 @@ void Cpu::step() {
 }
 
 void Cpu::run(){
-  while (!halted_){
+  while (!halted_ && !faulted()){
     step();
   }
 }

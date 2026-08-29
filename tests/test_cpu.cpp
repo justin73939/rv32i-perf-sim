@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 
 using sim::Cpu;
+using sim::FaultCause;
 using sim::Memory;
 using sim::RegisterFile;
 
@@ -331,6 +332,93 @@ TEST(Cpu, ExecuteBgeuNotTaken) {
 
   EXPECT_EQ(cpu.pc(), 4u);
   EXPECT_FALSE(cpu.halted());
+}
+
+TEST(Cpu, ExecuteJal) {
+  // JAL x1, +8  →  0x008000EF
+  // Save PC + 4 in x1, then jump from PC=0 to PC=8.
+  Memory mem(256);
+  RegisterFile regs;
+  Cpu cpu(mem, regs);
+
+  mem.store_word(0, 0x008000EFu);
+  cpu.reset(0);
+  cpu.step();
+
+  EXPECT_EQ(regs.read(1), 4u);
+  EXPECT_EQ(cpu.pc(), 8u);
+  EXPECT_FALSE(cpu.halted());
+}
+
+TEST(Cpu, ExecuteJalr) {
+  // JALR x1, 4(x2)  →  0x004100E7
+  // Save PC + 4 in x1, then jump to x2 + 4.
+  Memory mem(256);
+  RegisterFile regs;
+  Cpu cpu(mem, regs);
+
+  mem.store_word(0, 0x004100E7u);
+  regs.write(2, 16u);
+  cpu.reset(0);
+  cpu.step();
+
+  EXPECT_EQ(regs.read(1), 4u);
+  EXPECT_EQ(cpu.pc(), 20u);
+  EXPECT_FALSE(cpu.halted());
+}
+
+TEST(Cpu, JalrClearsTargetBitAndCanDiscardLink) {
+  // JALR x0, 0(x1)  →  0x00008067
+  // An odd target is made even; x0 discards the link value.
+  Memory mem(256);
+  RegisterFile regs;
+  Cpu cpu(mem, regs);
+
+  mem.store_word(0, 0x00008067u);
+  regs.write(1, 21u);
+  cpu.reset(0);
+  cpu.step();
+
+  EXPECT_EQ(regs.read(0), 0u);
+  EXPECT_EQ(cpu.pc(), 20u);
+  EXPECT_FALSE(cpu.halted());
+}
+
+TEST(Cpu, JalrMisalignedTargetFaultsAndStopsRun) {
+  // JALR x5, 0(x1)  →  0x000082E7
+  // In RV32I-only mode, target 22 is not 4-byte aligned.
+  Memory mem(256);
+  RegisterFile regs;
+  Cpu cpu(mem, regs);
+
+  mem.store_word(0, 0x000082E7u);
+  regs.write(1, 22u);
+  cpu.reset(0);
+  cpu.run();
+
+  EXPECT_TRUE(cpu.faulted());
+  EXPECT_EQ(cpu.fault_cause(), FaultCause::InstructionAddressMisaligned);
+  EXPECT_FALSE(cpu.halted());
+  EXPECT_EQ(cpu.pc(), 0u);
+  EXPECT_EQ(regs.read(5), 0u);  // Faulting JALR must not write its link.
+}
+
+TEST(Cpu, JalMisalignedTargetFaults) {
+  // JAL x1, +6  →  0x006000EF
+  // RV32I-only instructions must start at 4-byte-aligned addresses.
+  Memory mem(256);
+  RegisterFile regs;
+  Cpu cpu(mem, regs);
+
+  mem.store_word(0, 0x006000EFu);
+  cpu.reset(0);
+  cpu.step();
+
+  EXPECT_TRUE(cpu.faulted());
+  EXPECT_EQ(cpu.fault_cause(), FaultCause::InstructionAddressMisaligned);
+  EXPECT_FALSE(cpu.halted());
+  EXPECT_EQ(cpu.pc(), 0u);
+  EXPECT_EQ(regs.read(1), 0u);  // Faulting JAL must not write its link.
 }
 
 TEST(Cpu, EcallHalts) {
