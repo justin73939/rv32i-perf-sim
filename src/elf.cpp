@@ -8,10 +8,7 @@ namespace sim {
 namespace {
 
 // ---------------------------------------------------------------------------
-// ELF is a binary file format. We do NOT #include <elf.h> so this stays
-// portable and every constant we care about is visible in this file.
-//
-// Only what we need for: "is this an RV32 little-endian executable image,
+// this file will help us answer:  "is this an RV32 little-endian executable image,
 // and which chunks do I copy into guest RAM?"
 // ---------------------------------------------------------------------------
 
