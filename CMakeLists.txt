@@ -15,6 +15,7 @@ add_library(sim_core
   src/memory.cpp
   src/cpu.cpp
   src/elf.cpp
+  src/pipeline.cpp
 )
 target_include_directories(sim_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_options(sim_core PRIVATE
@@ -42,6 +43,7 @@ if(SIM_BUILD_TESTS)
     tests/test_memory.cpp
     tests/test_cpu.cpp
     tests/test_elf.cpp
+    tests/test_pipeline.cpp
   )
   target_link_libraries(sim_tests PRIVATE sim_core GTest::gtest_main)
   include(GoogleTest)
