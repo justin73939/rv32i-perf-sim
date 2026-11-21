@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <sim/decoder.hpp>
 
 namespace sim {
 
@@ -19,20 +20,25 @@ struct IfId {
 
 struct IdEx {
   bool valid = false;
-  uint32_t pc = 0;
-  uint32_t inst = 0;
+  DecodedInstr instr;
+  uint32_t rs1_val = 0;
+  uint32_t rs2_val = 0;
 };
 
 struct ExMem {
   bool valid = false;
-  uint32_t pc = 0;
-  uint32_t inst = 0;
+  DecodedInstr instr;
+  uint32_t rs1_val = 0;
+  uint32_t rs2_val = 0;
+  uint32_t result = 0;
 };
 
 struct MemWb {
   bool valid = false;
-  uint32_t pc = 0;
-  uint32_t inst = 0;
+  DecodedInstr instr;
+  uint32_t rs1_val = 0;
+  uint32_t rs2_val = 0;
+  uint32_t result = 0;
 };
 
 // 5-stage pipeline, no hazard hardware (week 3).
