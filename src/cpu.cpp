@@ -96,13 +96,14 @@ void Cpu::step() {
   if (x.opcode == static_cast<uint8_t>(Opcode::Imm)) {
     uint32_t a = regs_.read(x.rs1);
     uint32_t imm = static_cast<uint32_t>(x.imm);
+    uint32_t shamt = imm & 0x1Fu; // imm[4:0]
+    uint32_t funct7 = (imm >> 5) & 0x7Fu; // imm[11:5]
 
     if (x.funct3 == 0b0) {
       uint32_t result = alu(a, imm, AluOp::Add);
       regs_.write(x.rd, result);
     } 
-    else if (x.funct3 == 0b001) {
-      uint32_t shamt = imm & 0x1Fu;
+    else if (x.funct3 == 0b001 && funct7 == 0) {
       uint32_t result = alu(a, shamt, AluOp::Sll);
       regs_.write(x.rd, result);
     } 
@@ -119,12 +120,11 @@ void Cpu::step() {
       regs_.write(x.rd, result);
     } 
     else if (x.funct3 == 0b101) {
-      uint32_t shamt = imm & 0x1Fu;
-      if (x.funct7 == 0b0) {
+      if (funct7 == 0b0) {
         uint32_t result = alu(a, shamt, AluOp::Srl);
         regs_.write(x.rd, result);
       } 
-      else if (x.funct7 == 0b0100000) {
+      else if (funct7 == 0b0100000) {
         uint32_t result = alu(a, shamt, AluOp::Sra);
         regs_.write(x.rd, result);
       }
