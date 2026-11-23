@@ -37,7 +37,41 @@ void Pipeline::step() {
 
   // Shift toward WB first so we still have IF/ID when we overwrite it.
   // Empty stages just copy bubbles (valid == false).
+  if (mem_wb_.valid){
+    const auto op = mem_wb_.instr.opcode;
+    if (op == static_cast<uint8_t>(Opcode::Op) || op == static_cast<uint8_t>(Opcode::Imm) ||
+        op == static_cast<uint8_t>(Opcode::Load) || op == static_cast<uint8_t>(Opcode::Lui) ||
+        op == static_cast<uint8_t>(Opcode::Auipc) || op == static_cast<uint8_t>(Opcode::Jal) || 
+        op == static_cast<uint8_t>(Opcode::Jalr)){ regs_.write(mem_wb_.instr.rd, mem_wb_.result);}
+  }
+
   mem_wb_.valid = ex_mem_.valid;
+
+  if (mem_wb_.valid){
+    mem_wb_.instr = ex_mem_.instr;
+    mem_wb_.rs1_val = ex_mem_.rs1_val;
+    mem_wb_.rs2_val = ex_mem_.rs2_val;
+    mem_wb_.result = ex_mem_.result;
+
+    if (mem_wb_.instr.opcode == static_cast<uint8_t>(Opcode::Load)){
+      if (mem_wb_.instr.funct3 == 0b010){  // LW
+        mem_wb_.result = mem_.load_word(mem_wb_.result);
+      }
+    }
+
+    if (mem_wb_.instr.opcode == static_cast<uint8_t>(Opcode::Store)){
+      if (mem_wb_.instr.funct3 == 0b010){  // SW
+        mem_.store_word(mem_wb_.result, mem_wb_.rs2_val);
+      }
+    }
+  }
+
+  else{
+    mem_wb_.instr = DecodedInstr{};
+    mem_wb_.rs1_val = 0;
+    mem_wb_.rs2_val = 0;
+    mem_wb_.result = 0;
+  }
 
   ex_mem_.valid = id_ex_.valid;
   if (ex_mem_.valid){
